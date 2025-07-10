@@ -29,7 +29,7 @@ jobs:
       run: npm ci
 
     - name: Build project
-      run: npx vite build
+      run: npx vite build --base=/pmportfolio/
 
     - name: Setup Pages
       uses: actions/configure-pages@v4
