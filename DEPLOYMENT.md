@@ -93,18 +93,24 @@ This guide will help you upload your portfolio website to GitHub and deploy it l
    - Publish directory: `dist`
    - Click "Deploy site"
 
-### Option C: GitHub Pages
+### Option C: GitHub Pages (Free hosting on GitHub)
 
-1. **Enable GitHub Pages**
+1. **Create a GitHub Actions workflow**
+   - Create `.github/workflows/deploy.yml` in your repository
+   - This will automatically build and deploy your site
+
+2. **Enable GitHub Pages**
    - Go to your repository on GitHub
    - Click "Settings" tab
    - Scroll to "Pages" section
-   - Source: "Deploy from a branch"
-   - Branch: `main`
-   - Folder: `/ (root)`
+   - Source: "GitHub Actions"
 
-2. **Add build script**
-   - Your site will be available at: `https://YOUR_USERNAME.github.io/portfolio-website`
+3. **Your site will be live at:**
+   - `https://YOUR_USERNAME.github.io/portfolio-website`
+   - Example: `https://markdnguyen.github.io/portfolio-website`
+
+4. **Automatic updates**
+   - Every time you push code, GitHub will rebuild and update your site
 
 ## Step 3: Custom Domain (Optional)
 
