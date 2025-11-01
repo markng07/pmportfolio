@@ -666,6 +666,55 @@ body {
     .achievements-grid {
         grid-template-columns: 1fr;
     }
+    
+    /* More compact achievements section for mobile */
+    .metrics-grid {
+        gap: 1rem;
+        margin-bottom: 2rem;
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .metric-card {
+        padding: 1rem;
+    }
+    
+    .metric-icon {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-icon .icon {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .metric-label {
+        font-size: 0.875rem;
+    }
+    
+    .achievement-card {
+        padding: 1.25rem;
+    }
+    
+    .achievement-title {
+        font-size: 1.25rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .achievement-list {
+        gap: 0.5rem;
+    }
+    
+    .achievement-list li {
+        font-size: 0.9rem;
+        padding-left: 1.25rem;
+    }
 }
 
 /* Contact Section */
