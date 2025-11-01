@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Outer circle -->
+  <circle cx="50" cy="50" r="48" fill="none" stroke="#D4AF37" stroke-width="4"/>
+  
+  <!-- Second circle -->
+  <circle cx="50" cy="50" r="36" fill="none" stroke="#0F172A" stroke-width="6"/>
+  
+  <!-- Third circle -->
+  <circle cx="50" cy="50" r="24" fill="none" stroke="#D4AF37" stroke-width="5"/>
+  
+  <!-- Center circle -->
+  <circle cx="50" cy="50" r="12" fill="#0F172A"/>
+  
+  <!-- Inner gold circle -->
+  <circle cx="50" cy="50" r="8" fill="#D4AF37"/>
+  
+  <!-- Geometric segments -->
+  <path d="M 50 2 L 50 14" stroke="#0F172A" stroke-width="4" stroke-linecap="round"/>
+  <path d="M 50 86 L 50 98" stroke="#0F172A" stroke-width="4" stroke-linecap="round"/>
+  <path d="M 2 50 L 14 50" stroke="#0F172A" stroke-width="4" stroke-linecap="round"/>
+  <path d="M 86 50 L 98 50" stroke="#0F172A" stroke-width="4" stroke-linecap="round"/>
+</svg>
