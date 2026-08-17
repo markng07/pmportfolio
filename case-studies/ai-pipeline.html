@@ -227,6 +227,40 @@
     font-weight: 500;
   }
 
+  /* Figures / images */
+  figure.figure {
+    margin: 32px 0;
+    padding: 0;
+  }
+
+  figure.figure img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border: 0.5px solid var(--rule-strong);
+    border-radius: 4px;
+    background: var(--sub-surface);
+  }
+
+  figure.figure figcaption {
+    margin-top: 10px;
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .ui-screens {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin: 32px 0;
+  }
+
+  .ui-screens figure { margin: 0; }
+
   /* Pipeline hero */
   .pipeline-hero {
     background: var(--sub-surface);
@@ -570,6 +604,19 @@
       <p>The interesting part isn't the idea. It's the engineering underneath it. This case study walks through how the AI pipeline is designed: why I split it into 5 sequential LLM calls, how I get reliable structured output every time, and a few practical tricks that cut both cost and latency.</p>
 
       <p><strong>What this case study covers:</strong> sequential LLM chains &middot; JSON schema enforcement via tool use &middot; prompt caching &middot; DB-backed prompts with versioning &middot; single-call optimization for simpler games &middot; production hosting &middot; a human evaluation loop.</p>
+
+      <h3 style="text-align:center; margin: 40px 0 4px;">Below is the user interface of this system</h3>
+    </div>
+
+    <div class="ui-screens">
+      <figure class="figure">
+        <img src="img/ui-input.png" alt="Screenshot of the lesson-plan input UI where a teacher uploads a lesson and picks a game format">
+        <figcaption>Input &mdash; teacher uploads a lesson plan and picks a game format.</figcaption>
+      </figure>
+      <figure class="figure">
+        <img src="img/ui-output.png" alt="Screenshot of the generated game output UI showing cards, rules, and teacher guide">
+        <figcaption>Output &mdash; generated cards, rules, and teacher facilitation guide.</figcaption>
+      </figure>
     </div>
   </section>
 
@@ -630,6 +677,11 @@
         </div>
       </div>
     </div>
+
+    <figure class="figure">
+      <img src="img/pipeline-5step.png" alt="Diagram of the 5-step LLM pipeline: extract objectives, select format, generate cards, write rules, build teacher guide">
+      <figcaption>Fig. 1 &mdash; the full 5-step chain. Each box is a separate Claude call with a single responsibility.</figcaption>
+    </figure>
   </section>
 
   <section>
@@ -664,7 +716,14 @@
       <p>After shipping the standard pipeline, I added a BINGO game format. BINGO has a fundamentally simpler structure &mdash; 24&ndash;26 vocabulary caller/answer pairs and a set of player boards. There's no real mechanic selection, no multi-card Q&amp;A sequence to orchestrate. It's one decision: pick the right words.</p>
 
       <p>Running it through the full 5-step pipeline felt like overkill, so I built a single-call variant: one LLM call generates the pairs and teacher guide, then a deterministic algorithm builds the player boards using a seeded shuffle. No second LLM call needed.</p>
+    </div>
 
+    <figure class="figure">
+      <img src="img/pipeline-bingo.png" alt="Diagram showing BINGO uses one LLM call for pairs and teacher guide, plus a deterministic board builder">
+      <figcaption>Fig. 2 &mdash; BINGO uses 1 LLM call + a deterministic board builder. Structurally simpler tasks don't need the full 5-step chain.</figcaption>
+    </figure>
+
+    <div class="prose">
       <blockquote>
         Don't default to a fixed number of steps. The right depth is determined by how many genuinely independent decisions the task requires.
         <cite>&mdash; the pipeline design rule</cite>
@@ -679,7 +738,14 @@
       <p>Early on, every prompt tweak required a code push. A teacher would give feedback like <em>"the vocabulary was too hard for second graders"</em> and I'd update a string in a <code>.js</code> file, commit, redeploy, wait. The feedback cycle was slow and annoying.</p>
 
       <p>I moved all prompts into a PostgreSQL table called <code>prompt_configs</code>. Each row stores the prompt text, which pipeline and step it belongs to, a version code, and an <code>is_active</code> flag. At runtime, the app fetches the active prompt from the database (with a 60-second in-memory cache), renders any template variables, then sends it to the API.</p>
+    </div>
 
+    <figure class="figure">
+      <img src="img/prompt-schema.png" alt="Diagram of the prompt_configs schema showing pipeline, step, version, active flag, and template variables">
+      <figcaption>The <code>prompt_configs</code> schema &mdash; versioned prompts, one active row per pipeline+step, all history preserved.</figcaption>
+    </figure>
+
+    <div class="prose">
       <p>The versioning scheme is <code>vX.Y.Z.T</code>:</p>
 
       <div class="rubric-grid">
@@ -723,7 +789,14 @@
         <li><strong>Database</strong> &mdash; Neon serverless PostgreSQL. Auto-suspends on inactivity, pairs well with low-traffic MVP.</li>
         <li><strong>AI API</strong> &mdash; Claude, called directly from the backend. No intermediary, no framework overhead.</li>
       </ul>
+    </div>
 
+    <figure class="figure">
+      <img src="img/infra-stack.png" alt="Diagram of the production stack: Vercel frontend, Render backend, Neon PostgreSQL, Anthropic Claude API">
+      <figcaption>The MVP infrastructure &mdash; Vercel, Render, Neon, Claude. Every non-AI component runs on a free tier.</figcaption>
+    </figure>
+
+    <div class="prose">
       <h3>CI/CD with GitHub Actions</h3>
       <p>Push to <code>main</code>, GitHub Actions runs type checks and builds, then Vercel and Render pick up the new code automatically via their GitHub integrations. No manual deploy steps.</p>
 
@@ -785,6 +858,11 @@
         <span class="price">~$10</span>
       </div>
     </div>
+
+    <figure class="figure">
+      <img src="img/cost-table.png" alt="Monthly cost breakdown table showing AI API, image generation, and free-tier infrastructure line items">
+      <figcaption>Monthly spend at MVP scale &mdash; AI is the entire variable cost line.</figcaption>
+    </figure>
 
     <div class="prose">
       <p><strong>The MVP economics:</strong> $10/month in AI API costs is the entire variable spend. Everything else is fixed at zero. This means I can run and iterate on the product for months before revenue becomes a survival question &mdash; which is exactly the space an MVP needs to operate in.</p>
