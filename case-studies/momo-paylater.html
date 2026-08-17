@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BNPL Profit Analysis — Mark Duc Nguyen</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<style>
+  :root {
+    --bg: #f7f5f0;
+    --surface: #ffffff;
+    --surface2: #f0ede8;
+    --border: #e0dbd2;
+    --amber: #b87414;
+    --amber-dim: #d4920f;
+    --red: #c0392b;
+    --green: #217a4f;
+    --blue: #2c5fad;
+    --text: #1a1814;
+    --muted: #7a7060;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: .15;
+  }
+
+  /* ── PROGRESS BAR ── */
+  #progress {
+    position: fixed; top: 0; left: 0;
+    height: 2px; background: var(--amber);
+    width: 0%; z-index: 1000;
+    transition: width .1s linear;
+  }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 800px; margin: 0 auto; padding: 0 2rem; }
+  .wide      { max-width: 1100px; margin: 0 auto; padding: 0 2rem; }
+
+  section { padding: 5rem 0; }
+  section + section { border-top: 1px solid var(--border); }
+
+  /* ── BACK LINK ── */
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 2rem 0 0;
+    transition: color .2s;
+  }
+  .back-link:hover { color: var(--amber); }
+  .back-link::before { content: "←"; font-size: .9rem; }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 2rem 0 5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(184,116,20,.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-label {
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--amber);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp .6s .1s forwards;
+  }
+
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    line-height: 1.15;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp .6s .25s forwards;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--amber);
+  }
+
+  .hero-sub {
+    font-size: 1.05rem;
+    color: var(--muted);
+    max-width: 560px;
+    opacity: 0;
+    animation: fadeUp .6s .4s forwards;
+  }
+
+  .hero-meta {
+    display: flex; gap: 2rem; flex-wrap: wrap;
+    margin-top: 2.5rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+    opacity: 0;
+    animation: fadeUp .6s .55s forwards;
+  }
+
+  .meta-item { display: flex; flex-direction: column; gap: .2rem; }
+  .meta-label { font-family: var(--mono); font-size: .68rem; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; }
+  .meta-value { font-size: .9rem; color: var(--text); font-weight: 500; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── SECTION HEADINGS ── */
+  .section-tag {
+    font-family: var(--mono);
+    font-size: .68rem;
+    color: var(--amber);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    margin-bottom: .8rem;
+    display: flex; align-items: center; gap: .6rem;
+  }
+  .section-tag::before {
+    content: '';
+    display: inline-block; width: 20px; height: 1px;
+    background: var(--amber);
+  }
+
+  h2 {
+    font-family: var(--serif);
+    font-size: clamp(1.6rem, 3vw, 2.1rem);
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 1.5rem;
+  }
+
+  h3 {
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--amber);
+    margin: 2rem 0 .6rem;
+    letter-spacing: .04em;
+  }
+
+  p { margin-bottom: 1.1rem; color: #4a4540; }
+  p:last-child { margin-bottom: 0; }
+
+  strong { color: var(--text); font-weight: 500; }
+
+  /* ── CALLOUT BOXES ── */
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--amber);
+    border-radius: 0 8px 8px 0;
+    padding: 1.2rem 1.5rem;
+    margin: 1.8rem 0;
+  }
+  .callout p { margin: 0; color: var(--text); font-size: .95rem; }
+  .callout-label {
+    font-family: var(--mono); font-size: .65rem;
+    color: var(--amber); letter-spacing: .12em;
+    text-transform: uppercase; margin-bottom: .5rem;
+  }
+
+  /* ── STAT CARDS ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.4rem 1.2rem;
+    transition: border-color .2s;
+  }
+  .stat-card:hover { border-color: var(--amber-dim); }
+
+  .stat-number {
+    font-family: var(--mono);
+    font-size: 1.8rem;
+    font-weight: 500;
+    line-height: 1;
+    margin-bottom: .4rem;
+  }
+  .stat-number.red   { color: var(--red); }
+  .stat-number.green { color: var(--green); }
+  .stat-number.amber { color: var(--amber); }
+
+  .stat-desc {
+    font-size: .8rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  /* ── DATA TABLE ── */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 1.8rem 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .85rem;
+  }
+
+  thead {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    font-family: var(--mono);
+    font-size: .65rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: .9rem 1.1rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: .8rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+    color: #4a4540;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  .td-num  { font-family: var(--mono); text-align: right; }
+  .td-red  { color: var(--red);   font-family: var(--mono); text-align: right; }
+  .td-grn  { color: var(--green); font-family: var(--mono); text-align: right; }
+  .td-amb  { color: var(--amber); font-family: var(--mono); text-align: right; }
+  .td-bold { font-weight: 500; color: var(--text); }
+
+  /* ── BAR CHART (CSS) ── */
+  .chart-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.8rem;
+    margin: 1.8rem 0;
+  }
+  .chart-title {
+    font-family: var(--mono); font-size: .68rem;
+    color: var(--muted); letter-spacing: .1em;
+    text-transform: uppercase; margin-bottom: 1.5rem;
+  }
+  .bar-row {
+    display: flex; align-items: center; gap: 1rem;
+    margin-bottom: .8rem;
+  }
+  .bar-label {
+    font-size: .78rem; color: var(--muted);
+    min-width: 120px; text-align: right;
+    white-space: nowrap;
+  }
+  .bar-track {
+    flex: 1; height: 22px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    position: relative;
+    transition: width 1s cubic-bezier(.4,0,.2,1);
+  }
+  .bar-fill.revenue { background: var(--blue); }
+  .bar-fill.baddebt { background: var(--red); }
+  .bar-fill.profit  { background: var(--green); }
+
+  .bar-val {
+    font-family: var(--mono); font-size: .75rem;
+    min-width: 55px; text-align: right;
+  }
+
+  .chart-legend {
+    display: flex; gap: 1.5rem; margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: .4rem;
+    font-size: .75rem; color: var(--muted);
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+
+  /* ── COHORT GRID ── */
+  .cohort-grid {
+    display: grid;
+    grid-template-columns: 120px repeat(6, 1fr);
+    gap: 3px;
+    margin: 1.8rem 0;
+    font-family: var(--mono);
+    font-size: .72rem;
+  }
+  .cg-header {
+    background: var(--surface2);
+    padding: .5rem .4rem;
+    text-align: center;
+    color: var(--muted);
+    border-radius: 4px;
+    font-size: .62rem;
+    letter-spacing: .05em;
+  }
+  .cg-label {
+    background: var(--surface2);
+    padding: .5rem .6rem;
+    color: var(--muted);
+    border-radius: 4px;
+    display: flex; align-items: center;
+  }
+  .cg-cell {
+    padding: .5rem .3rem;
+    text-align: center;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  /* ── CODE BLOCK ── */
+  .code-section {
+    background: #f8f6f2;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin: 1.8rem 0;
+    overflow: hidden;
+  }
+  .code-header {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: .7rem 1.2rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .code-header-left {
+    display: flex; align-items: center; gap: .6rem;
+  }
+  .code-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .code-filename {
+    font-family: var(--mono); font-size: .72rem;
+    color: var(--muted); letter-spacing: .04em;
+  }
+  .code-tag {
+    font-family: var(--mono); font-size: .62rem;
+    color: var(--amber); background: rgba(240,168,50,.1);
+    padding: .2rem .6rem; border-radius: 20px;
+    letter-spacing: .06em;
+  }
+  pre {
+    padding: 1.4rem 1.5rem;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: .78rem;
+    line-height: 1.8;
+    tab-size: 2;
+  }
+  .kw  { color: #7c3aed; }
+  .fn  { color: #1d6fc7; }
+  .cm  { color: #9c9080; font-style: italic; }
+  .st  { color: #2e7d32; }
+  .nm  { color: #c0440a; }
+  .op  { color: var(--muted); }
+
+  /* ── INSIGHT CARDS ── */
+  .insight-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 1.8rem 0;
+  }
+  .insight-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .insight-card::before {
+    content: attr(data-num);
+    position: absolute; top: -10px; right: 12px;
+    font-family: var(--serif); font-size: 4rem;
+    color: #e8e3db; line-height: 1;
+    pointer-events: none;
+  }
+  .insight-title {
+    font-size: .82rem; font-weight: 500;
+    color: var(--amber); margin-bottom: .5rem;
+  }
+  .insight-body { font-size: .88rem; color: #6b6358; line-height: 1.55; }
+
+  /* ── RECOMMENDATION STEPS ── */
+  .rec-list { list-style: none; margin: 1.5rem 0; }
+  .rec-item {
+    display: flex; gap: 1.2rem;
+    padding: 1.2rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .rec-item:last-child { border-bottom: none; }
+  .rec-num {
+    font-family: var(--mono); font-size: .7rem;
+    color: var(--amber); min-width: 28px;
+    padding-top: .2rem;
+  }
+  .rec-content h4 {
+    font-size: .95rem; font-weight: 500;
+    color: var(--text); margin-bottom: .3rem;
+  }
+  .rec-content p {
+    font-size: .88rem; color: var(--muted);
+    margin: 0; line-height: 1.5;
+  }
+
+  /* ── RESULT BANNER ── */
+  .result-banner {
+    background: linear-gradient(135deg, rgba(184,116,20,.06), rgba(33,122,79,.04));
+    border: 1px solid rgba(184,116,20,.2);
+    border-radius: 12px;
+    padding: 2.5rem;
+    margin: 2rem 0;
+  }
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  .result-item { text-align: center; }
+  .result-num {
+    font-family: var(--serif); font-size: 2.4rem;
+    line-height: 1; color: var(--amber); font-weight: 700;
+    margin-bottom: .3rem;
+  }
+  .result-label { font-size: .78rem; color: var(--muted); line-height: 1.4; }
+
+  /* ── FOOTER ── */
+  .footer {
+    padding: 3rem 0;
+    text-align: center;
+    font-size: .8rem;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  /* ── REVEAL ANIMATION ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .6s, transform .6s;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── REDACTION ── */
+  .redact {
+    display: inline-block;
+    background: #1a1814;
+    color: transparent;
+    border-radius: 2px;
+    user-select: none;
+    position: relative;
+    vertical-align: middle;
+    min-width: 3.5em;
+    height: 1.05em;
+    margin: 0 .1em;
+  }
+  .redact::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent, transparent 3px,
+      rgba(255,255,255,.04) 3px, rgba(255,255,255,.04) 4px
+    );
+    border-radius: 2px;
+  }
+  .redact-wide  { min-width: 6em; }
+  .redact-sm    { min-width: 2em; }
+  .redact-note {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-family: var(--mono); font-size: .65rem;
+    color: var(--muted); letter-spacing: .06em;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: .2rem .55rem;
+    vertical-align: middle;
+  }
+  .redact-banner {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .7rem 1.1rem;
+    margin: 1.2rem 0;
+    display: flex; align-items: center; gap: .8rem;
+    font-family: var(--mono); font-size: .7rem;
+    color: var(--muted); letter-spacing: .06em;
+  }
+  .redact-banner-icon { font-size: .9rem; opacity: .5; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .hero { padding: 5rem 0 3rem; }
+    .hero-meta { gap: 1.2rem; }
+    .cohort-grid { font-size: .6rem; }
+    .bar-label { min-width: 80px; font-size: .7rem; }
+  }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<!-- ══════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════ -->
+<div class="container">
+  <a href="../index.html#case-studies" class="back-link">Back to portfolio</a>
+  <div class="hero">
+    <div class="hero-label">Case Study · Revenue &amp; Profit Analysis</div>
+    <h1>Why Didn't Profit Grow<br>as Fast as <em>Our Users</em>?</h1>
+    <p class="hero-sub">A deep-dive into a high-growth BNPL product's profit divergence problem — tracing hidden bad debt back to a single merchant segment through multi-system SQL analysis.</p>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <span class="meta-label">Company</span>
+        <span class="meta-value"><span class="redact-note">🔒 Confidential</span></span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Product</span>
+        <span class="meta-value">BNPL / Pay Later</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Role</span>
+        <span class="meta-value">Senior Product Manager</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Timeline</span>
+        <span class="meta-value">Q1 – Q4 2023</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Data Scale</span>
+        <span class="meta-value">~50M+ rows · 6 systems</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SITUATION
+══════════════════════════════════════════════ -->
+<div class="container">
+  <section class="reveal">
+    <div class="section-tag">01 · Situation</div>
+    <h2>Strong Growth on the Surface — But Something Was Off</h2>
+
+    <p>The BNPL product I managed was one of the fastest-growing products in the company. By mid-2023, it had surpassed <span class="redact redact-sm"></span> active users, growing roughly <span class="redact redact-sm"></span> month-over-month. Revenue was climbing. Transaction volume was hitting new highs every quarter. From the outside, it looked like a success story.</p>
+
+    <p>But when I looked at the profit trend, something didn't add up. Revenue had grown <strong>3.1×</strong> over the year. Profit had grown only <strong>0.8×</strong>. They were supposed to move together — and they weren't.</p>
+
+    <p>The Head of Business interpreted this as a signal to double down: more features, more marketing spend. I disagreed. Before pouring fuel on the fire, I needed to understand what was already burning.</p>
+
+    <div class="callout">
+      <div class="callout-label">The Core Question</div>
+      <p>While users and revenue grew 3× in 12 months, why did operating profit grow less than 1×? Which cost line was scaling out of control — and why?</p>
+    </div>
+
+    <div class="redact-banner">
+      <span class="redact-banner-icon">🔒</span>
+      Specific revenue, profit, and bad debt figures are redacted. Relative trends and ratios are preserved.
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-number green">+210%</div>
+        <div class="stat-desc">Revenue growth<br>Jan → Dec 2023</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number red">+340%</div>
+        <div class="stat-desc">Bad debt cost growth<br>same period</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number amber">+78%</div>
+        <div class="stat-desc">Operating profit growth<br>same period</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number red">60%</div>
+        <div class="stat-desc">Of all bad debt traced to<br>a single merchant type</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     DATA & APPROACH
+══════════════════════════════════════════════ -->
+<div class="container">
+  <section class="reveal">
+    <div class="section-tag">02 · Data &amp; Approach</div>
+    <h2>Six Systems, 50 Million Rows, One Flat Model</h2>
+
+    <p>The challenge wasn't a lack of data — it was that the data lived across six siloed systems: the transaction ledger, the repayment engine, the collections platform, the merchant database, the user profile store, and the credit scoring system. No single table told the full story.</p>
+
+    <p>My analytical strategy had two rules. First, <strong>aggregate before joining</strong> — pre-summarize each system into monthly roll-ups so I wasn't performing multi-million-row Cartesian joins. Second, <strong>build a cohort model</strong> — every user tagged to their approval month, so I could track credit behavior over time rather than reading a snapshot that masked deterioration in newer cohorts.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Source System</th>
+            <th>Key Fields</th>
+            <th>Raw Row Count</th>
+            <th>Post-Aggregation Rows</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-bold">transactions</td>
+            <td>user_id, merchant_id, txn_date, amount, fee</td>
+            <td class="td-num">~52M</td>
+            <td class="td-grn">~1.4M</td>
+          </tr>
+          <tr>
+            <td class="td-bold">repayments</td>
+            <td>user_id, repayment_date, amount_due, amount_repaid</td>
+            <td class="td-num">~31M</td>
+            <td class="td-grn">~820K</td>
+          </tr>
+          <tr>
+            <td class="td-bold">collections_writeoffs</td>
+            <td>user_id, writeoff_date, writeoff_amount</td>
+            <td class="td-num">~4.8M</td>
+            <td class="td-grn">~190K</td>
+          </tr>
+          <tr>
+            <td class="td-bold">merchant_profiles</td>
+            <td>merchant_id, category, type, avg_txn_value</td>
+            <td class="td-num">~240K</td>
+            <td class="td-grn">~240K</td>
+          </tr>
+          <tr>
+            <td class="td-bold">users</td>
+            <td>user_id, approval_date, channel, credit_tier</td>
+            <td class="td-num">~1.4M</td>
+            <td class="td-grn">~1.4M</td>
+          </tr>
+          <tr>
+            <td class="td-bold">credit_scores</td>
+            <td>user_id, score_date, score, risk_band</td>
+            <td class="td-num">~6.2M</td>
+            <td class="td-grn">~1.4M</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SQL QUERIES
+══════════════════════════════════════════════ -->
+<div class="container">
+  <section class="reveal">
+    <div class="section-tag">03 · SQL Analysis</div>
+    <h2>The Queries That Found the Signal</h2>
+
+    <p>I structured the analysis in six sequential steps, each building on the last. The goal was to move from <em>what is happening</em> (P&L waterfall) to <em>where</em> it's happening (merchant segmentation) to <em>why</em> it's happening (cash-out fraud pattern).</p>
+
+    <h3>Step 1 — Pre-aggregate each source system</h3>
+    <p>Before any join, each table is summarized to monthly grain per user. This reduces the transaction table from 52M rows to ~1.4M — a 97% reduction — before touching any other system.</p>
+
+    <div class="code-section">
+      <div class="code-header">
+        <div class="code-header-left">
+          <div class="code-dot" style="background:#ff5f57"></div>
+          <div class="code-dot" style="background:#febc2e"></div>
+          <div class="code-dot" style="background:#28c840"></div>
+          <span class="code-filename">step1_pre_aggregate.sql</span>
+        </div>
+        <span class="code-tag">Performance</span>
+      </div>
+<pre><span class="cm">-- Aggregate transactions: 52M rows → ~1.4M</span>
+<span class="kw">CREATE TEMP TABLE</span> txn_summary <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+    user_id,
+    merchant_id,
+    <span class="fn">DATE_TRUNC</span>(<span class="st">'month'</span>, txn_date)   <span class="kw">AS</span> txn_month,
+    <span class="fn">COUNT</span>(<span class="op">*</span>)                         <span class="kw">AS</span> txn_count,
+    <span class="fn">SUM</span>(txn_amount)                  <span class="kw">AS</span> total_txn_amount,
+    <span class="fn">SUM</span>(fee_revenue)                 <span class="kw">AS</span> total_fee_revenue,
+    <span class="fn">SUM</span>(interest_revenue)            <span class="kw">AS</span> total_interest_revenue
+<span class="kw">FROM</span> transactions
+<span class="kw">GROUP BY</span> <span class="nm">1</span>, <span class="nm">2</span>, <span class="nm">3</span>;
+
+<span class="cm">-- Aggregate repayments: 31M rows → ~820K</span>
+<span class="kw">CREATE TEMP TABLE</span> repayment_summary <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+    user_id,
+    <span class="fn">DATE_TRUNC</span>(<span class="st">'month'</span>, repayment_date) <span class="kw">AS</span> repayment_month,
+    <span class="fn">SUM</span>(amount_repaid)                   <span class="kw">AS</span> total_repaid,
+    <span class="fn">SUM</span>(amount_due)                      <span class="kw">AS</span> total_due,
+    <span class="fn">SUM</span>(amount_due <span class="op">-</span> amount_repaid)      <span class="kw">AS</span> total_outstanding
+<span class="kw">FROM</span> repayments
+<span class="kw">GROUP BY</span> <span class="nm">1</span>, <span class="nm">2</span>;
+
+<span class="cm">-- Aggregate bad debt write-offs: 4.8M rows → ~190K</span>
+<span class="kw">CREATE TEMP TABLE</span> bad_debt_summary <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+    user_id,
+    <span class="fn">DATE_TRUNC</span>(<span class="st">'month'</span>, writeoff_date) <span class="kw">AS</span> writeoff_month,
+    <span class="fn">SUM</span>(writeoff_amount)                <span class="kw">AS</span> total_bad_debt
+<span class="kw">FROM</span> collections_writeoffs
+<span class="kw">GROUP BY</span> <span class="nm">1</span>, <span class="nm">2</span>;</pre>
+    </div>
+
+    <h3>Step 2 — Build the master cohort table</h3>
+    <p>Join the pre-aggregated summaries into a single flat model. Every row represents one user, one merchant, one month — with all revenue and cost metrics attached. Crucially, <code>cohort_month</code> tags each user to their acquisition period, enabling vintage analysis later.</p>
+
+    <div class="code-section">
+      <div class="code-header">
+        <div class="code-header-left">
+          <div class="code-dot" style="background:#ff5f57"></div>
+          <div class="code-dot" style="background:#febc2e"></div>
+          <div class="code-dot" style="background:#28c840"></div>
+          <span class="code-filename">step2_master_cohort.sql</span>
+        </div>
+        <span class="code-tag">Core Model</span>
+      </div>
+<pre><span class="kw">CREATE TEMP TABLE</span> master_cohort <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+    u.user_id,
+    <span class="fn">DATE_TRUNC</span>(<span class="st">'month'</span>, u.approval_date)  <span class="kw">AS</span> cohort_month,
+    u.acquisition_channel,
+    u.credit_tier,
+    t.txn_month,
+    t.merchant_id,
+    m.merchant_category,
+    m.merchant_type,                      <span class="cm">-- 'mom_and_pop' | 'chain' | 'ecommerce'</span>
+    t.txn_count,
+    t.total_txn_amount,
+    t.total_fee_revenue,
+    t.total_interest_revenue,
+    <span class="fn">COALESCE</span>(r.total_repaid,   <span class="nm">0</span>)           <span class="kw">AS</span> total_repaid,
+    <span class="fn">COALESCE</span>(r.total_due,     <span class="nm">0</span>)           <span class="kw">AS</span> total_due,
+    <span class="fn">COALESCE</span>(b.total_bad_debt, <span class="nm">0</span>)          <span class="kw">AS</span> total_bad_debt
+<span class="kw">FROM</span> users u
+<span class="kw">JOIN</span> txn_summary t         <span class="kw">ON</span> u.user_id <span class="op">=</span> t.user_id
+<span class="kw">JOIN</span> merchant_summary m   <span class="kw">ON</span> t.merchant_id <span class="op">=</span> m.merchant_id
+<span class="kw">LEFT JOIN</span> repayment_summary r
+    <span class="kw">ON</span> u.user_id <span class="op">=</span> r.user_id
+   <span class="kw">AND</span> t.txn_month <span class="op">=</span> r.repayment_month
+<span class="kw">LEFT JOIN</span> bad_debt_summary b
+    <span class="kw">ON</span> u.user_id <span class="op">=</span> b.user_id
+   <span class="kw">AND</span> t.txn_month <span class="op">=</span> b.writeoff_month;</pre>
+    </div>
+
+    <h3>Step 3 — P&L waterfall: index cost lines to revenue growth</h3>
+    <p>This query answered the first question: which cost line is growing disproportionately? By computing a MoM growth rate for both revenue and bad debt simultaneously, the divergence became immediately visible in the output.</p>
+
+    <div class="code-section">
+      <div class="code-header">
+        <div class="code-header-left">
+          <div class="code-dot" style="background:#ff5f57"></div>
+          <div class="code-dot" style="background:#febc2e"></div>
+          <div class="code-dot" style="background:#28c840"></div>
+          <span class="code-filename">step3_pnl_waterfall.sql</span>
+        </div>
+        <span class="code-tag">Diagnostic</span>
+      </div>
+<pre><span class="kw">SELECT</span>
+    txn_month,
+    <span class="fn">SUM</span>(total_fee_revenue <span class="op">+</span> total_interest_revenue)  <span class="kw">AS</span> total_revenue,
+    <span class="fn">SUM</span>(total_bad_debt)                               <span class="kw">AS</span> total_bad_debt,
+
+    <span class="cm">-- Bad debt as % of revenue (the key ratio)</span>
+    <span class="fn">ROUND</span>(<span class="fn">SUM</span>(total_bad_debt) <span class="op">/</span>
+        <span class="fn">NULLIF</span>(<span class="fn">SUM</span>(total_fee_revenue <span class="op">+</span> total_interest_revenue), <span class="nm">0</span>) <span class="op">*</span> <span class="nm">100</span>, <span class="nm">1</span>)
+                                                          <span class="kw">AS</span> bad_debt_pct_revenue,
+
+    <span class="cm">-- MoM growth comparison</span>
+    <span class="fn">ROUND</span>((<span class="fn">SUM</span>(total_bad_debt) <span class="op">-</span>
+        <span class="fn">LAG</span>(<span class="fn">SUM</span>(total_bad_debt)) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> txn_month))
+        <span class="op">/</span> <span class="fn">NULLIF</span>(<span class="fn">LAG</span>(<span class="fn">SUM</span>(total_bad_debt)) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> txn_month), <span class="nm">0</span>) <span class="op">*</span> <span class="nm">100</span>, <span class="nm">1</span>)
+                                                          <span class="kw">AS</span> bad_debt_mom_pct,
+
+    <span class="fn">ROUND</span>((<span class="fn">SUM</span>(total_fee_revenue <span class="op">+</span> total_interest_revenue) <span class="op">-</span>
+        <span class="fn">LAG</span>(<span class="fn">SUM</span>(total_fee_revenue <span class="op">+</span> total_interest_revenue))
+            <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> txn_month))
+        <span class="op">/</span> <span class="fn">NULLIF</span>(<span class="fn">LAG</span>(<span class="fn">SUM</span>(total_fee_revenue <span class="op">+</span> total_interest_revenue))
+            <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> txn_month), <span class="nm">0</span>) <span class="op">*</span> <span class="nm">100</span>, <span class="nm">1</span>)
+                                                          <span class="kw">AS</span> revenue_mom_pct
+<span class="kw">FROM</span> master_cohort
+<span class="kw">GROUP BY</span> <span class="nm">1</span>
+<span class="kw">ORDER BY</span> <span class="nm">1</span>;</pre>
+    </div>
+
+    <h3>Step 4 — Cohort credit quality: are newer cohorts defaulting more?</h3>
+    <p>This query computes bad debt ratios by months-since-approval for each acquisition cohort. If the Q3 cohort shows a 12% bad debt ratio at month 3 while the Q1 cohort showed 4% at the same stage, the problem is at the acquisition gate — you are approving riskier users over time.</p>
+
+    <div class="code-section">
+      <div class="code-header">
+        <div class="code-header-left">
+          <div class="code-dot" style="background:#ff5f57"></div>
+          <div class="code-dot" style="background:#febc2e"></div>
+          <div class="code-dot" style="background:#28c840"></div>
+          <span class="code-filename">step4_cohort_quality.sql</span>
+        </div>
+        <span class="code-tag">Vintage Analysis</span>
+      </div>
+<pre><span class="kw">SELECT</span>
+    cohort_month,
+    txn_month,
+    <span class="fn">DATEDIFF</span>(<span class="st">'month'</span>, cohort_month, txn_month)   <span class="kw">AS</span> months_on_book,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> user_id)                      <span class="kw">AS</span> active_users,
+    <span class="fn">SUM</span>(total_bad_debt)                          <span class="kw">AS</span> bad_debt,
+    <span class="fn">SUM</span>(total_fee_revenue <span class="op">+</span> total_interest_revenue) <span class="kw">AS</span> revenue,
+    <span class="fn">ROUND</span>(<span class="fn">SUM</span>(total_bad_debt) <span class="op">/</span>
+        <span class="fn">NULLIF</span>(<span class="fn">SUM</span>(total_fee_revenue
+            <span class="op">+</span> total_interest_revenue), <span class="nm">0</span>) <span class="op">*</span> <span class="nm">100</span>, <span class="nm">2</span>)
+                                                 <span class="kw">AS</span> bad_debt_ratio_pct
+<span class="kw">FROM</span> master_cohort
+<span class="kw">GROUP BY</span> <span class="nm">1</span>, <span class="nm">2</span>, <span class="nm">3</span>
+<span class="kw">ORDER BY</span> <span class="nm">1</span>, <span class="nm">3</span>;</pre>
+    </div>
+
+    <h3>Step 5 — Merchant segmentation: where does the bad debt live?</h3>
+    <p>After confirming bad debt was the culprit, I traced it along two dimensions: merchant category and merchant type. The <code>pct_of_total_bad_debt</code> window function was the key — it ranked every merchant segment by its share of total bad debt across the entire portfolio, not just its own bad debt ratio.</p>
+
+    <div class="code-section">
+      <div class="code-header">
+        <div class="code-header-left">
+          <div class="code-dot" style="background:#ff5f57"></div>
+          <div class="code-dot" style="background:#febc2e"></div>
+          <div class="code-dot" style="background:#28c840"></div>
+          <span class="code-filename">step5_merchant_segmentation.sql</span>
+        </div>
+        <span class="code-tag">Root Cause</span>
+      </div>
+<pre><span class="kw">SELECT</span>
+    merchant_category,
+    merchant_type,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> user_id)                           <span class="kw">AS</span> unique_users,
+    <span class="fn">SUM</span>(total_txn_amount)                             <span class="kw">AS</span> total_volume,
+    <span class="fn">SUM</span>(total_fee_revenue <span class="op">+</span> total_interest_revenue)   <span class="kw">AS</span> total_revenue,
+    <span class="fn">SUM</span>(total_bad_debt)                               <span class="kw">AS</span> total_bad_debt,
+
+    <span class="cm">-- Bad debt rate within this segment</span>
+    <span class="fn">ROUND</span>(<span class="fn">SUM</span>(total_bad_debt) <span class="op">/</span>
+        <span class="fn">NULLIF</span>(<span class="fn">SUM</span>(total_fee_revenue
+            <span class="op">+</span> total_interest_revenue), <span class="nm">0</span>) <span class="op">*</span> <span class="nm">100</span>, <span class="nm">1</span>)
+                                                      <span class="kw">AS</span> bad_debt_rate_pct,
+
+    <span class="cm">-- Share of TOTAL portfolio bad debt (window function)</span>
+    <span class="fn">ROUND</span>(<span class="fn">SUM</span>(total_bad_debt) <span class="op">/</span>
+        <span class="fn">NULLIF</span>(<span class="fn">SUM</span>(<span class="fn">SUM</span>(total_bad_debt)) <span class="kw">OVER</span> (), <span class="nm">0</span>) <span class="op">*</span> <span class="nm">100</span>, <span class="nm">1</span>)
+                                                      <span class="kw">AS</span> pct_of_total_bad_debt
+<span class="kw">FROM</span> master_cohort
+<span class="kw">GROUP BY</span> <span class="nm">1</span>, <span class="nm">2</span>
+<span class="kw">ORDER BY</span> total_bad_debt <span class="kw">DESC</span>;</pre>
+    </div>
+
+    <h3>Step 6 — Flag high-risk merchants for the scoring model</h3>
+    <p>The final query operationalized the findings into a three-tier risk classification. A merchant flagged as high risk had both an abnormally high average transaction value (above the 90th percentile) and a bad debt rate above 15% — the exact behavioral signature of cash-out fraud collusion.</p>
+
+    <div class="code-section">
+      <div class="code-header">
+        <div class="code-header-left">
+          <div class="code-dot" style="background:#ff5f57"></div>
+          <div class="code-dot" style="background:#febc2e"></div>
+          <div class="code-dot" style="background:#28c840"></div>
+          <span class="code-filename">step6_merchant_risk_flags.sql</span>
+        </div>
+        <span class="code-tag">Actionable Output</span>
+      </div>
+<pre><span class="kw">WITH</span> txn_p90 <span class="kw">AS</span> (
+    <span class="kw">SELECT</span>
+        <span class="fn">PERCENTILE_CONT</span>(<span class="nm">0.90</span>)
+            <span class="kw">WITHIN GROUP</span> (<span class="kw">ORDER BY</span> total_txn_amount)  <span class="kw">AS</span> p90_txn_value
+    <span class="kw">FROM</span> master_cohort
+)
+<span class="kw">SELECT</span>
+    mc.merchant_id,
+    mc.merchant_category,
+    mc.merchant_type,
+    <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> mc.user_id)                      <span class="kw">AS</span> unique_users,
+    <span class="fn">AVG</span>(mc.total_txn_amount <span class="op">/</span>
+        <span class="fn">NULLIF</span>(mc.txn_count, <span class="nm">0</span>))                    <span class="kw">AS</span> avg_txn_value,
+    <span class="fn">SUM</span>(mc.total_bad_debt)                          <span class="kw">AS</span> total_bad_debt,
+    <span class="fn">ROUND</span>(<span class="fn">SUM</span>(mc.total_bad_debt) <span class="op">/</span>
+        <span class="fn">NULLIF</span>(<span class="fn">SUM</span>(mc.total_txn_amount), <span class="nm">0</span>) <span class="op">*</span> <span class="nm">100</span>, <span class="nm">1</span>)
+                                                    <span class="kw">AS</span> bad_debt_rate_pct,
+    <span class="kw">CASE</span>
+        <span class="kw">WHEN</span> <span class="fn">SUM</span>(mc.total_bad_debt) <span class="op">/</span>
+             <span class="fn">NULLIF</span>(<span class="fn">SUM</span>(mc.total_txn_amount), <span class="nm">0</span>) <span class="op">></span> <span class="nm">0.15</span>
+         <span class="kw">AND</span> <span class="fn">AVG</span>(mc.total_txn_amount <span class="op">/</span>
+             <span class="fn">NULLIF</span>(mc.txn_count, <span class="nm">0</span>)) <span class="op">></span> p90.p90_txn_value
+        <span class="kw">THEN</span> <span class="st">'HIGH RISK — Escalate'</span>
+        <span class="kw">WHEN</span> <span class="fn">SUM</span>(mc.total_bad_debt) <span class="op">/</span>
+             <span class="fn">NULLIF</span>(<span class="fn">SUM</span>(mc.total_txn_amount), <span class="nm">0</span>) <span class="kw">BETWEEN</span> <span class="nm">0.05</span> <span class="kw">AND</span> <span class="nm">0.15</span>
+        <span class="kw">THEN</span> <span class="st">'MEDIUM RISK — Monitor'</span>
+        <span class="kw">ELSE</span> <span class="st">'LOW RISK — No Action'</span>
+    <span class="kw">END</span>                                             <span class="kw">AS</span> risk_tier
+<span class="kw">FROM</span> master_cohort mc, txn_p90 p90
+<span class="kw">GROUP BY</span> <span class="nm">1</span>, <span class="nm">2</span>, <span class="nm">3</span>, p90.p90_txn_value
+<span class="kw">ORDER BY</span> bad_debt_rate_pct <span class="kw">DESC</span>;</pre>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     INSIGHTS
+══════════════════════════════════════════════ -->
+<div class="container">
+  <section class="reveal">
+    <div class="section-tag">04 · Insights</div>
+    <h2>What the Data Actually Showed</h2>
+
+    <p>The queries returned a clear story across three levels: a portfolio trend, a cohort pattern, and a merchant concentration. Each layer made the picture sharper.</p>
+
+    <h3>P&L Waterfall Results (Jan – Dec 2023)</h3>
+
+    <div class="redact-banner">
+      <span class="redact-banner-icon">🔒</span>
+      Absolute revenue and cost figures are redacted. Percentage ratios and MoM growth rates are preserved to illustrate the analytical method.
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th style="text-align:right">Revenue</th>
+            <th style="text-align:right">Bad Debt</th>
+            <th style="text-align:right">Bad Debt % Revenue</th>
+            <th style="text-align:right">Revenue MoM</th>
+            <th style="text-align:right">Bad Debt MoM</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Jan 2023</td><td class="td-num"><span class="redact"></span></td><td class="td-num"><span class="redact"></span></td><td class="td-amb">6.0%</td><td class="td-num">—</td><td class="td-num">—</td></tr>
+          <tr><td>Feb 2023</td><td class="td-num"><span class="redact"></span></td><td class="td-num"><span class="redact"></span></td><td class="td-amb">6.5%</td><td class="td-grn">+9.2%</td><td class="td-red">+18.2%</td></tr>
+          <tr><td>Mar 2023</td><td class="td-num"><span class="redact"></span></td><td class="td-num"><span class="redact"></span></td><td class="td-amb">7.9%</td><td class="td-grn">+13.4%</td><td class="td-red">+38.5%</td></tr>
+          <tr><td>Apr 2023</td><td class="td-num"><span class="redact"></span></td><td class="td-num"><span class="redact"></span></td><td class="td-red">9.4%</td><td class="td-grn">+11.8%</td><td class="td-red">+33.3%</td></tr>
+          <tr><td>May 2023</td><td class="td-num"><span class="redact"></span></td><td class="td-num"><span class="redact"></span></td><td class="td-red">11.0%</td><td class="td-grn">+13.7%</td><td class="td-red">+33.3%</td></tr>
+          <tr><td>Jun 2023</td><td class="td-num"><span class="redact"></span></td><td class="td-num"><span class="redact"></span></td><td class="td-red">13.6%</td><td class="td-grn">+14.5%</td><td class="td-red">+40.6%</td></tr>
+          <tr><td>Jul 2023</td><td class="td-num"><span class="redact"></span></td><td class="td-num"><span class="redact"></span></td><td class="td-red">15.6%</td><td class="td-grn">+13.9%</td><td class="td-red">+31.1%</td></tr>
+          <tr><td>Aug 2023</td><td class="td-num"><span class="redact"></span></td><td class="td-num"><span class="redact"></span></td><td class="td-red">17.1%</td><td class="td-grn">+11.4%</td><td class="td-red">+22.0%</td></tr>
+          <tr><td>Sep 2023</td><td class="td-num"><span class="redact"></span></td><td class="td-num"><span class="redact"></span></td><td class="td-red">17.3%</td><td class="td-grn">+11.4%</td><td class="td-red">+12.5%</td></tr>
+          <tr><td>Oct 2023</td><td class="td-num"><span class="redact"></span></td><td class="td-num"><span class="redact"></span></td><td class="td-red">16.7%</td><td class="td-grn">+9.6%</td><td class="td-red">+6.2%</td></tr>
+          <tr><td>Nov 2023</td><td class="td-num"><span class="redact"></span></td><td class="td-num"><span class="redact"></span></td><td class="td-amb">8.9%</td><td class="td-grn">+6.6%</td><td class="td-grn">−43.0%</td></tr>
+          <tr><td>Dec 2023</td><td class="td-num"><span class="redact"></span></td><td class="td-num"><span class="redact"></span></td><td class="td-grn">6.7%</td><td class="td-grn">+4.2%</td><td class="td-grn">−22.4%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <div class="callout-label">Key Signal</div>
+      <p>Bad debt MoM growth consistently outpaced revenue growth from February onward — peaking at <strong>40.6% MoM bad debt growth vs. 14.5% revenue growth</strong> in June. The bad debt-to-revenue ratio tripled from 6% in January to 17.3% by September before intervention took hold.</p>
+    </div>
+
+    <h3>Cohort Credit Quality — Bad Debt Ratio by Months on Book (%)</h3>
+    <p>The cohort matrix confirmed a structural deterioration. Newer cohorts were arriving with worse credit behavior from day one — not because of economic conditions but because the merchant fraud channel was disproportionately pulling in high-risk users.</p>
+
+    <div class="cohort-grid">
+      <div class="cg-header">Cohort</div>
+      <div class="cg-header">Month 1</div>
+      <div class="cg-header">Month 2</div>
+      <div class="cg-header">Month 3</div>
+      <div class="cg-header">Month 4</div>
+      <div class="cg-header">Month 5</div>
+      <div class="cg-header">Month 6</div>
+
+      <div class="cg-label">Jan 2023</div>
+      <div class="cg-cell" style="background:rgba(33,122,79,.12);color:#1a6640">3.8%</div>
+      <div class="cg-cell" style="background:rgba(33,122,79,.10);color:#1a6640">4.1%</div>
+      <div class="cg-cell" style="background:rgba(184,116,20,.12);color:#8a5a0a">4.9%</div>
+      <div class="cg-cell" style="background:rgba(184,116,20,.14);color:#8a5a0a">5.2%</div>
+      <div class="cg-cell" style="background:rgba(184,116,20,.16);color:#8a5a0a">5.8%</div>
+      <div class="cg-cell" style="background:rgba(184,116,20,.18);color:#8a5a0a">6.1%</div>
+
+      <div class="cg-label">Mar 2023</div>
+      <div class="cg-cell" style="background:rgba(184,116,20,.12);color:#8a5a0a">5.2%</div>
+      <div class="cg-cell" style="background:rgba(184,116,20,.16);color:#8a5a0a">6.4%</div>
+      <div class="cg-cell" style="background:rgba(192,57,43,.12);color:#8b1a0e">8.1%</div>
+      <div class="cg-cell" style="background:rgba(192,57,43,.16);color:#8b1a0e">9.7%</div>
+      <div class="cg-cell" style="background:rgba(192,57,43,.20);color:#8b1a0e">11.2%</div>
+      <div class="cg-cell" style="background:rgba(192,57,43,.24);color:#8b1a0e">12.0%</div>
+
+      <div class="cg-label">Jun 2023</div>
+      <div class="cg-cell" style="background:rgba(192,57,43,.14);color:#8b1a0e">7.9%</div>
+      <div class="cg-cell" style="background:rgba(192,57,43,.20);color:#8b1a0e">10.3%</div>
+      <div class="cg-cell" style="background:rgba(192,57,43,.28);color:#8b1a0e">13.8%</div>
+      <div class="cg-cell" style="background:rgba(192,57,43,.35);color:#8b1a0e">16.2%</div>
+      <div class="cg-cell" style="background:rgba(184,116,20,.18);color:#8a5a0a">9.1%</div>
+      <div class="cg-cell" style="background:rgba(184,116,20,.12);color:#8a5a0a">7.4%</div>
+
+      <div class="cg-label">Sep 2023</div>
+      <div class="cg-cell" style="background:rgba(184,116,20,.10);color:#8a5a0a">5.6%</div>
+      <div class="cg-cell" style="background:rgba(184,116,20,.10);color:#8a5a0a">5.9%</div>
+      <div class="cg-cell" style="background:rgba(33,122,79,.12);color:#1a6640">4.8%</div>
+      <div class="cg-cell" style="background:rgba(33,122,79,.14);color:#1a6640">4.4%</div>
+      <div class="cg-cell" style="background:rgba(33,122,79,.14);color:#1a6640">4.2%</div>
+      <div class="cg-cell" style="background:rgba(33,122,79,.12);color:#1a6640">4.0%</div>
+    </div>
+
+    <p style="font-size:.82rem;color:var(--muted);margin-top:.8rem;">Note: Sep 2023 cohort improves sharply — reflecting the merchant risk model going live in October, which blocked the high-risk acquisition channel.</p>
+
+    <h3>Merchant Segmentation Results</h3>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Bad Debt Concentration by Merchant Type</div>
+
+      <div class="bar-row">
+        <div class="bar-label">Mom &amp; Pop Stores</div>
+        <div class="bar-track">
+          <div class="bar-fill baddebt" style="width:60%"></div>
+        </div>
+        <div class="bar-val" style="color:var(--red)">60%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Online Marketplace</div>
+        <div class="bar-track">
+          <div class="bar-fill baddebt" style="width:18%; opacity:.7"></div>
+        </div>
+        <div class="bar-val" style="color:var(--red)">18%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Chain Retail</div>
+        <div class="bar-track">
+          <div class="bar-fill baddebt" style="width:12%; opacity:.5"></div>
+        </div>
+        <div class="bar-val" style="color:var(--muted)">12%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">F&amp;B / Restaurant</div>
+        <div class="bar-track">
+          <div class="bar-fill baddebt" style="width:6%; opacity:.4"></div>
+        </div>
+        <div class="bar-val" style="color:var(--muted)">6%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Other</div>
+        <div class="bar-track">
+          <div class="bar-fill baddebt" style="width:4%; opacity:.3"></div>
+        </div>
+        <div class="bar-val" style="color:var(--muted)">4%</div>
+      </div>
+
+      <div style="height: 1.2rem"></div>
+      <div class="chart-title">Revenue Contribution vs. Bad Debt Contribution — Mom &amp; Pop Stores</div>
+
+      <div class="bar-row">
+        <div class="bar-label">Revenue share</div>
+        <div class="bar-track">
+          <div class="bar-fill revenue" style="width:31%"></div>
+        </div>
+        <div class="bar-val" style="color:var(--blue)">31%</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Bad debt share</div>
+        <div class="bar-track">
+          <div class="bar-fill baddebt" style="width:60%"></div>
+        </div>
+        <div class="bar-val" style="color:var(--red)">60%</div>
+      </div>
+
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Revenue</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Bad Debt</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Profit</div>
+      </div>
+    </div>
+
+    <div class="insight-grid">
+      <div class="insight-card" data-num="1">
+        <div class="insight-title">Bad debt grew 3.4× faster than revenue</div>
+        <div class="insight-body">Revenue grew 210% over 12 months. Bad debt grew 345% over the same period. This was not a revenue problem — it was a risk containment failure.</div>
+      </div>
+      <div class="insight-card" data-num="2">
+        <div class="insight-title">Newer cohorts arrived already compromised</div>
+        <div class="insight-body">The Jun 2023 cohort hit a bad debt ratio more than 3× higher than the Jan 2023 cohort at the same stage (month 4). Acquisition quality was deteriorating, not just repayment behavior.</div>
+      </div>
+      <div class="insight-card" data-num="3">
+        <div class="insight-title">Mom &amp; pop stores: 31% of revenue, 60% of bad debt</div>
+        <div class="insight-body">These merchants generated strong transaction volume and appeared profitable in isolation. But their true unit economics, when bad debt was fully attributed, were deeply negative.</div>
+      </div>
+      <div class="insight-card" data-num="4">
+        <div class="insight-title">The fraud pattern had a clear signature</div>
+        <div class="insight-body">Qualitative interviews with the Collections team confirmed cash-out fraud: users and store owners colluding on fake high-value transactions, with no intent to repay. Average fraudulent transaction value was several multiples above the legitimate average.</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     RECOMMENDATIONS
+══════════════════════════════════════════════ -->
+<div class="container">
+  <section class="reveal">
+    <div class="section-tag">05 · Recommendations</div>
+    <h2>Optimize Risk Before Investing in Growth</h2>
+
+    <p>The analysis made one thing clear: we did not have a demand problem, a product problem, or a marketing problem. We had a <strong>risk containment problem concentrated in a specific, identifiable merchant segment</strong>. Before approving any new marketing spend, we needed to plug the leak.</p>
+
+    <div class="callout">
+      <div class="callout-label">My Recommendation to Leadership</div>
+      <p>Pause incremental marketing investment and deploy engineering resources to build a Merchant Risk Scoring model. This would deliver a higher expected ROI than new user acquisition, because each fraudulent merchant removed from the network immediately improved the unit economics of the existing user base.</p>
+    </div>
+
+    <ul class="rec-list">
+      <li class="rec-item">
+        <div class="rec-num">01</div>
+        <div class="rec-content">
+          <h4>Build a Merchant Risk Scoring model</h4>
+          <p>Use the flagging query (Step 6) as the foundation. Score each merchant on three signals: average transaction value percentile, bad debt rate over a rolling 60-day window, and transaction velocity (number of unique users per week). Merchants in the top 5% of combined score get auto-flagged for review.</p>
+        </div>
+      </li>
+      <li class="rec-item">
+        <div class="rec-num">02</div>
+        <div class="rec-content">
+          <h4>Implement tiered intervention, not a binary block</h4>
+          <p>High-risk merchants receive delayed payout (72-hour settlement hold), a per-transaction cap, and mandatory manual review for transactions above a defined threshold. Medium-risk merchants receive monitoring and automated alerts. This preserves legitimate volume while eliminating the fraud pattern.</p>
+        </div>
+      </li>
+      <li class="rec-item">
+        <div class="rec-num">03</div>
+        <div class="rec-content">
+          <h4>Re-underwrite the Jun–Aug 2023 cohorts</h4>
+          <p>Users acquired through high-risk merchant channels during the peak fraud period (Jun–Aug) should be subject to reduced credit limits until their repayment track record improves. This limits future bad debt exposure from the already-compromised cohorts without deactivating accounts entirely.</p>
+        </div>
+      </li>
+      <li class="rec-item">
+        <div class="rec-num">04</div>
+        <div class="rec-content">
+          <h4>Only then re-enable marketing investment</h4>
+          <p>Once the bad debt ratio returns to its January baseline of ~6%, resume growth investment — but redirect channel spend away from mom-and-pop merchant partnerships and toward e-commerce and chain retail, where the bad debt rate is below 4%.</p>
+        </div>
+      </li>
+    </ul>
+  </section>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     RESULTS
+══════════════════════════════════════════════ -->
+<div class="container">
+  <section class="reveal">
+    <div class="section-tag">06 · Results</div>
+    <h2>The Numbers After Intervention</h2>
+
+    <p>The Data Science and Risk teams built the Merchant Risk Scoring model in <strong>four weeks</strong>. We ran a controlled pilot for three months — applying the tiered intervention model to a randomly selected 50% of flagged merchants while the other 50% served as a holdout group.</p>
+
+    <p>The results validated the analysis and exceeded the initial business case.</p>
+
+    <div class="redact-banner">
+      <span class="redact-banner-icon">🔒</span>
+      Absolute savings figures and specific profit impact are redacted. Relative improvement metrics are preserved.
+    </div>
+
+    <div class="result-banner">
+      <p style="font-family: var(--mono); font-size:.7rem; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin:0 0 .3rem">3-Month Pilot Results (Oct – Dec 2023)</p>
+      <div class="result-grid">
+        <div class="result-item">
+          <div class="result-num">−20%</div>
+          <div class="result-label">Reduction in risk costs vs. holdout group</div>
+        </div>
+        <div class="result-item">
+          <div class="result-num"><span class="redact" style="height:.9em;min-width:3em;vertical-align:middle;display:inline-block"></span></div>
+          <div class="result-label">Projected annual bad debt savings</div>
+        </div>
+        <div class="result-item">
+          <div class="result-num">6.7%</div>
+          <div class="result-label">Bad debt ratio in Dec (down from 17.3% peak)</div>
+        </div>
+        <div class="result-item">
+          <div class="result-num"><span class="redact" style="height:.9em;min-width:3em;vertical-align:middle;display:inline-block"></span></div>
+          <div class="result-label">Operating profit growth, full-year 2023 vs. 2022</div>
+        </div>
+        <div class="result-item">
+          <div class="result-num">4 wks</div>
+          <div class="result-label">Model build time from analysis to production</div>
+        </div>
+        <div class="result-item">
+          <div class="result-num">&lt;3%</div>
+          <div class="result-label">Revenue impact (minimal legitimate volume loss)</div>
+        </div>
+      </div>
+    </div>
+
+    <p>Critically, the intervention had a <strong>minimal impact on legitimate revenue</strong>. Because the tiered model used delayed payout and transaction caps rather than outright bans, genuine small merchants were largely unaffected. Less than 3% of total transaction volume was disrupted, while the bad debt ratio was cut by more than half within two months.</p>
+
+    <p>Once unit economics turned positive, leadership approved the renewed marketing investment. In Q1 2024, the product re-entered growth mode — this time with a risk infrastructure that could scale alongside it.</p>
+
+    <div class="callout">
+      <div class="callout-label">What I Would Do Differently</div>
+      <p>The fraud signal was present in the data as early as February 2023, but the monthly review cadence meant it was not escalated until May. Building an automated bad debt ratio alert — triggering when any merchant segment's bad debt rate crosses a defined threshold for two consecutive weeks — would have surfaced the issue approximately two months earlier.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════ -->
+<div class="container">
+  <div class="footer">
+    <p>Mark Duc Nguyen · Senior PM, Revenue &amp; Profit Analytics</p>
+    <p style="margin-top:.4rem;color:var(--border)">Company identity and absolute financial figures are redacted for confidentiality.</p>
+  </div>
+</div>
+
+<script>
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const scrolled = window.scrollY;
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    document.getElementById('progress').style.width = (scrolled / total * 100) + '%';
+  });
+
+  // Reveal on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

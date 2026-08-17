@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Solo PM running the full software delivery pipeline for an equipment finance lending platform — a case study by Mark Duc Nguyen.">
+<title>Solo PM, Full Pipeline — Mark Duc Nguyen</title>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+
+<style>
+  :root {
+    --ground: #FCFCF9;
+    --sub-surface: #F5F4EE;
+    --ink: #1A1E24;
+    --ink-mid: #3A3F48;
+    --muted: #5C6470;
+    --faint: #8A8F98;
+    --rule: #E5E4DE;
+    --rule-strong: #CFCEC6;
+    --accent: #1F5F5B;
+    --accent-mid: #2E7F7A;
+    --brick: #B84A2E;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, monospace;
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #16181A;
+    --sub-surface: #1F2124;
+    --ink: #E8E6DF;
+    --ink-mid: #C0BEB7;
+    --muted: #8A8B87;
+    --faint: #626360;
+    --rule: #2C2E30;
+    --rule-strong: #3C3E40;
+    --accent: #5FA398;
+    --accent-mid: #7FBAB0;
+    --brick: #D97354;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  .prose {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  /* Back to portfolio link */
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 20px 0 0;
+  }
+  .back-link:hover { color: var(--accent); }
+  .back-link::before { content: "\2190"; font-size: 14px; }
+
+  header.masthead {
+    padding: 24px 0 32px;
+    border-bottom: 0.5px solid var(--rule);
+    margin-bottom: 64px;
+  }
+
+  .masthead-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .masthead-left {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .masthead-row .author {
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: 0.05em;
+  }
+
+  .masthead-row .sep {
+    color: var(--faint);
+  }
+
+  .theme-toggle {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .theme-toggle button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+
+  .theme-toggle button:hover { color: var(--ink); }
+
+  .theme-toggle button.active {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .theme-toggle button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  .theme-toggle .sep {
+    color: var(--faint);
+  }
+
+  h1.title {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 56px;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    margin: 40px 0 20px;
+    text-wrap: balance;
+    color: var(--ink);
+    max-width: 900px;
+  }
+
+  .subtitle {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1.4;
+    color: var(--muted);
+    max-width: 720px;
+    margin: 0 0 8px;
+    text-wrap: balance;
+  }
+
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 12px;
+  }
+
+  section {
+    padding: 56px 0;
+    border-top: 0.5px solid var(--rule);
+  }
+
+  section:first-of-type {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  h2 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 34px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 24px;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.01em;
+    margin: 32px 0 10px;
+    color: var(--ink);
+  }
+
+  p {
+    margin: 0 0 20px;
+    color: var(--ink-mid);
+    font-size: 17px;
+    line-height: 1.65;
+  }
+
+  p.lead {
+    font-size: 21px;
+    line-height: 1.55;
+    color: var(--ink);
+    margin-bottom: 28px;
+    text-wrap: pretty;
+  }
+
+  p.lead::first-letter {
+    font-family: var(--serif);
+    font-size: 64px;
+    float: left;
+    line-height: 0.9;
+    padding: 6px 12px 0 0;
+    color: var(--accent);
+    font-weight: 400;
+  }
+
+  strong { color: var(--ink); font-weight: 600; }
+  em { color: var(--ink); }
+
+  a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+  a:hover { color: var(--brick); }
+
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+  blockquote {
+    font-family: var(--serif);
+    font-size: 24px;
+    line-height: 1.4;
+    font-style: italic;
+    color: var(--ink);
+    border-left: 2px solid var(--accent);
+    padding: 4px 0 4px 24px;
+    margin: 32px 0;
+    text-wrap: balance;
+  }
+
+  blockquote cite {
+    display: block;
+    font-family: var(--sans);
+    font-style: normal;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 12px;
+    font-weight: 500;
+  }
+
+  ul.checks {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0 28px;
+  }
+
+  ul.checks li {
+    position: relative;
+    padding-left: 22px;
+    margin-bottom: 10px;
+    color: var(--ink-mid);
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  ul.checks li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 8px;
+    height: 8px;
+    border: 1.5px solid var(--accent);
+    border-right: 0;
+    border-top: 0;
+    transform: rotate(-45deg) translate(2px, -2px);
+  }
+
+  /* Pipeline hero */
+  .pipeline-hero {
+    background: var(--sub-surface);
+    padding: 56px 40px;
+    border: 0.5px solid var(--rule);
+    border-radius: 4px;
+    margin: 8px 0 12px;
+  }
+
+  .pipeline-title {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .pipeline-title .eyebrow { margin-bottom: 8px; }
+
+  .pipeline-title h3 {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 400;
+    margin: 0;
+    letter-spacing: -0.005em;
+  }
+
+  .pipeline-flow {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  .stage {
+    background: var(--ground);
+    border: 0.5px solid var(--rule-strong);
+    padding: 18px 22px;
+    position: relative;
+  }
+
+  .stage-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .stage-name {
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .stage-detail {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  .stage-detail em {
+    font-style: normal;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .arrow {
+    display: flex;
+    justify-content: center;
+    padding: 6px 0;
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.2em;
+  }
+
+  .human-note {
+    text-align: center;
+    margin-top: 24px;
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .human-note span {
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--ground);
+    border: 0.5px solid var(--rule-strong);
+    border-radius: 2px;
+    color: var(--brick);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 10px;
+    margin-right: 8px;
+  }
+
+  /* Metrics section */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0;
+    margin: 32px 0;
+    border-top: 0.5px solid var(--rule);
+    border-left: 0.5px solid var(--rule);
+  }
+
+  .metric {
+    padding: 24px;
+    border-right: 0.5px solid var(--rule);
+    border-bottom: 0.5px solid var(--rule);
+  }
+
+  .metric-value {
+    font-family: var(--serif);
+    font-size: 44px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    display: block;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .metric-value.brick { color: var(--brick); }
+  .metric-value.accent { color: var(--accent); }
+
+  .metric-label {
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.03em;
+    line-height: 1.4;
+  }
+
+  /* Compression table */
+  .compression {
+    margin: 24px 0 32px;
+    border: 0.5px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .compression-row {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1.2fr 0.6fr;
+    padding: 12px 16px;
+    border-bottom: 0.5px solid var(--rule);
+    font-size: 14px;
+    align-items: center;
+  }
+
+  .compression-row:last-child { border-bottom: none; }
+
+  .compression-row.header {
+    background: var(--sub-surface);
+    font-family: var(--sans);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .compression-row .stage-label {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .compression-row .before { color: var(--muted); }
+  .compression-row .after { color: var(--ink); font-weight: 500; }
+  .compression-row .comp {
+    color: var(--accent);
+    font-family: var(--mono);
+    font-weight: 600;
+    text-align: right;
+  }
+
+  .compression-row.total {
+    background: var(--sub-surface);
+    font-weight: 600;
+  }
+  .compression-row.total .stage-label,
+  .compression-row.total .before,
+  .compression-row.total .after {
+    color: var(--ink);
+  }
+  .compression-row.total .comp {
+    color: var(--brick);
+    font-size: 15px;
+  }
+
+  /* Domain fluency pills */
+  .domain-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 0.5px solid var(--rule);
+    margin: 24px 0 32px;
+  }
+
+  .domain-item {
+    background: var(--ground);
+    padding: 16px 18px;
+  }
+
+  .domain-term {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+
+  .domain-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  /* Failure mode callouts */
+  .failure {
+    border-left: 3px solid var(--brick);
+    padding: 4px 0 4px 20px;
+    margin: 24px 0;
+  }
+
+  .failure-label {
+    font-family: var(--sans);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--brick);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .failure h4 {
+    font-family: var(--sans);
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    color: var(--ink);
+  }
+
+  .failure p {
+    font-size: 15px;
+    margin: 0 0 8px;
+    line-height: 1.55;
+  }
+
+  .failure p:last-child { margin-bottom: 0; }
+
+  /* Case walkthrough */
+  .walkthrough {
+    background: var(--sub-surface);
+    padding: 32px 32px 24px;
+    border-radius: 4px;
+    border: 0.5px solid var(--rule);
+    margin: 24px 0 32px;
+  }
+
+  .walkthrough h3 {
+    margin-top: 0;
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: -0.005em;
+  }
+
+  .walkthrough-timeline {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0 0;
+    counter-reset: step;
+  }
+
+  .walkthrough-timeline li {
+    position: relative;
+    padding: 12px 0 12px 60px;
+    border-top: 0.5px solid var(--rule);
+    counter-increment: step;
+    min-height: 40px;
+  }
+
+  .walkthrough-timeline li::before {
+    content: counter(step, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+
+  .walkthrough-timeline .time {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 2px;
+    letter-spacing: 0.03em;
+  }
+
+  .walkthrough-timeline .what {
+    font-size: 15px;
+    color: var(--ink);
+    line-height: 1.5;
+  }
+
+  /* Lessons */
+  ol.lessons {
+    list-style: none;
+    counter-reset: lesson;
+    padding: 0;
+    margin: 20px 0;
+  }
+
+  ol.lessons li {
+    counter-increment: lesson;
+    padding: 20px 0 20px 60px;
+    position: relative;
+    border-top: 0.5px solid var(--rule);
+    min-height: 40px;
+  }
+
+  ol.lessons li:last-child { border-bottom: 0.5px solid var(--rule); }
+
+  ol.lessons li::before {
+    content: counter(lesson);
+    position: absolute;
+    left: 0;
+    top: 22px;
+    font-family: var(--serif);
+    font-size: 40px;
+    color: var(--accent);
+    font-weight: 400;
+    line-height: 1;
+  }
+
+  ol.lessons li h4 {
+    font-family: var(--sans);
+    font-size: 17px;
+    font-weight: 600;
+    margin: 0 0 6px;
+    color: var(--ink);
+  }
+
+  ol.lessons li p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  /* Footer */
+  footer {
+    padding: 48px 0 64px;
+    border-top: 0.5px solid var(--rule);
+    margin-top: 40px;
+    text-align: center;
+  }
+
+  footer .kicker {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 20px;
+    color: var(--muted);
+    margin-bottom: 24px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    text-wrap: balance;
+  }
+
+  footer .contact {
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  footer .contact a { margin: 0 12px; }
+
+  /* Responsive */
+  @media (max-width: 720px) {
+    .wrap { padding: 0 20px; }
+    h1.title { font-size: 38px; }
+    .subtitle { font-size: 18px; }
+    h2 { font-size: 26px; }
+    p.lead { font-size: 18px; }
+    .pipeline-hero { padding: 32px 20px; }
+    .metric-value { font-size: 34px; }
+    .compression-row { grid-template-columns: 1.5fr 1fr 1fr 0.5fr; font-size: 12px; padding: 10px 12px; }
+    blockquote { font-size: 19px; padding-left: 16px; }
+    ol.lessons li { padding-left: 48px; }
+    ol.lessons li::before { font-size: 32px; }
+    header.masthead { padding: 20px 0 20px; margin-bottom: 40px; }
+    p.lead::first-letter { font-size: 52px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <a href="../index.html#case-studies" class="back-link">Back to portfolio</a>
+
+  <header class="masthead">
+    <div class="masthead-row">
+      <div class="masthead-left">
+        <span class="author">Mark Duc Nguyen</span>
+        <span class="sep">&middot;</span>
+        <span>Product Case Study, 2026</span>
+      </div>
+      <div class="theme-toggle" role="group" aria-label="Color theme">
+        <button type="button" data-theme-set="light" aria-label="Use light theme">Light</button>
+        <span class="sep" aria-hidden="true">/</span>
+        <button type="button" data-theme-set="dark" aria-label="Use dark theme">Dark</button>
+      </div>
+    </div>
+
+    <h1 class="title">Running the full software delivery pipeline as a solo PM.</h1>
+
+    <p class="subtitle">How I shipped a working equipment finance platform for a mid-sized lender by orchestrating AI agents through every stage of the SDLC &mdash; from meeting notes to production &mdash; while keeping human judgment on the calls that mattered.</p>
+  </header>
+
+  <section>
+    <div class="prose">
+      <p class="lead">Most product managers who work with AI treat it as an assistant &mdash; a smarter drafting tool. I treated it as engineering capacity. Over three months, working alone as the PM, I shipped a working equipment finance lending platform for EF Group: underwriting workspace, TValue calculator with sub-debt and ride-along scenarios, file management on AWS, transactional email service, QBO accounting integration, and mock e-signature flow. The engineers were AI agents. The QA was Playwright. I was the human in the loop.</p>
+
+      <p>This is a case study on the workflow that made it work &mdash; and, more importantly, on the places where the workflow broke and had to be redesigned. It is written for hiring managers evaluating whether I can operate in the emerging AI-native PM archetype, in the specific context of fintech lending.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <p class="eyebrow">The pipeline</p>
+      <h2>A single PM, orchestrating the entire SDLC.</h2>
+      <p>The mechanism &mdash; meeting to production &mdash; runs through six discrete stages. Each stage is either fully automated or has a clear boundary where human judgment is required. The pipeline replaces the traditional PM &rarr; engineer handoff with a series of AI-native handoffs, held together by structured prompts, mandated tests, and process guardrails I designed and maintain.</p>
+    </div>
+
+    <div class="pipeline-hero">
+      <div class="pipeline-title">
+        <p class="eyebrow">From spoken word to shipped code</p>
+        <h3>Meeting to production, 3 days.</h3>
+      </div>
+
+      <div class="pipeline-flow">
+        <div class="stage">
+          <span class="stage-num">STAGE 01</span>
+          <span class="stage-name">Client meeting captured</span>
+          <p class="stage-detail">70-minute Fathom recording with transcript. <em>Fully automated.</em></p>
+        </div>
+        <div class="arrow">&darr;</div>
+        <div class="stage">
+          <span class="stage-num">STAGE 02</span>
+          <span class="stage-name">Insights &amp; requirements extracted</span>
+          <p class="stage-detail">Claude parses transcript &rarr; separates confirmed features from clarifications needed. Anchored to verbatim quotes. <em>PM validates against domain knowledge.</em></p>
+        </div>
+        <div class="arrow">&darr;</div>
+        <div class="stage">
+          <span class="stage-num">STAGE 03</span>
+          <span class="stage-name">Tickets &amp; PRDs generated</span>
+          <p class="stage-detail">Atlassian MCP creates Jira tickets with acceptance criteria &amp; test cases; Confluence pages act as system-of-record. Dependencies mapped. <em>PM confirms scope boundaries.</em></p>
+        </div>
+        <div class="arrow">&darr;</div>
+        <div class="stage">
+          <span class="stage-num">STAGE 04</span>
+          <span class="stage-name">Auto-development</span>
+          <p class="stage-detail">Replit agent picks up the ticket, follows the tier-based master guideline, builds per acceptance criteria. <em>Fully automated within guardrails.</em></p>
+        </div>
+        <div class="arrow">&darr;</div>
+        <div class="stage">
+          <span class="stage-num">STAGE 05</span>
+          <span class="stage-name">Playwright auto-tests</span>
+          <p class="stage-detail">Mandated red-green cycle. Regression checks on existing tests. Test file per ticket. <em>Fully automated.</em></p>
+        </div>
+        <div class="arrow">&darr;</div>
+        <div class="stage">
+          <span class="stage-num">STAGE 06</span>
+          <span class="stage-name">Human review &amp; correction loop</span>
+          <p class="stage-detail">PM validates against acceptance criteria, catches silent deviations, verifies external system state. Loops back with correction prompts as needed. <em>Non-negotiable human judgment.</em></p>
+        </div>
+      </div>
+
+      <div class="human-note">
+        <span>Human in the loop</span>Stages 2, 3, and 6 &mdash; the ones that require judgment about lending domain, scope, and correctness &mdash; are where I focused my attention.
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <p class="eyebrow">Compression</p>
+      <h2>Weeks of work, done in days.</h2>
+      <p>The pipeline does not merely accelerate the traditional workflow &mdash; it eliminates entire steps that exist only because humans can't hold context across a full SDLC. Sprint planning, engineering estimation, cross-team handoffs, and much of manual QA disappear when the same PM writes the ticket, directs the build, reads the test output, and validates the result.</p>
+    </div>
+
+    <div class="compression">
+      <div class="compression-row header">
+        <span class="stage-label">Stage</span>
+        <span class="before">Traditional</span>
+        <span class="after">AI-native</span>
+        <span class="comp">Speedup</span>
+      </div>
+      <div class="compression-row">
+        <span class="stage-label">Meeting notes &rarr; Jira tickets</span>
+        <span class="before">1&ndash;3 days</span>
+        <span class="after">10&ndash;30 min</span>
+        <span class="comp">~10&times;</span>
+      </div>
+      <div class="compression-row">
+        <span class="stage-label">Ticket &rarr; work started</span>
+        <span class="before">1 week</span>
+        <span class="after">Immediate</span>
+        <span class="comp">~5&times;</span>
+      </div>
+      <div class="compression-row">
+        <span class="stage-label">Feature development</span>
+        <span class="before">3&ndash;10 days</span>
+        <span class="after">Hours to 1 day</span>
+        <span class="comp">~5&ndash;10&times;</span>
+      </div>
+      <div class="compression-row">
+        <span class="stage-label">QA cycle</span>
+        <span class="before">1&ndash;3 days</span>
+        <span class="after">Minutes + 30 min review</span>
+        <span class="comp">~10&times;</span>
+      </div>
+      <div class="compression-row total">
+        <span class="stage-label">End-to-end: one feature</span>
+        <span class="before">2&ndash;4 weeks</span>
+        <span class="after">1&ndash;3 days</span>
+        <span class="comp">~10&times;</span>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>The compression is not free. It moves the constraint from "how much can we build" to "how well can I validate it" &mdash; and the answer to the second question depends on how tightly the process is designed. That is the PM job.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <p class="eyebrow">Numbers</p>
+      <h2>What one PM plus AI shipped.</h2>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <span class="metric-value accent">3<span style="font-size:24px;">mo</span></span>
+        <div class="metric-label">Total engagement, from first meeting to platform in-use</div>
+      </div>
+      <div class="metric">
+        <span class="metric-value">1</span>
+        <div class="metric-label">Human PM &mdash; me &mdash; directing all output</div>
+      </div>
+      <div class="metric">
+        <span class="metric-value">6</span>
+        <div class="metric-label">Modules shipped: TValue, files, comms, e-sign, QBO sync, underwriting</div>
+      </div>
+      <div class="metric">
+        <span class="metric-value">50<span style="font-size:24px;">+</span></span>
+        <div class="metric-label">Jira tickets, each with acceptance criteria &amp; Playwright coverage</div>
+      </div>
+      <div class="metric">
+        <span class="metric-value">17</span>
+        <div class="metric-label">Email templates across customer, internal, and system categories</div>
+      </div>
+      <div class="metric">
+        <span class="metric-value brick">$5<span style="font-size:24px;">/mo</span></span>
+        <div class="metric-label">Estimated ongoing AWS cost at production volume</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <p class="eyebrow">Domain fluency</p>
+      <h2>Learning equipment finance well enough to spec it.</h2>
+      <p>An AI agent will faithfully build the wrong thing if the ticket is wrong. In lending, "wrong" often means "financially incorrect in a way that only a specialist notices" &mdash; a mismatched day-count convention, an amortization schedule that doesn't reflect advance payments, an escrow model that ignores construction draws. Getting tickets right meant learning the domain well enough that the VP of Sales &mdash; whose deals I was translating into software &mdash; would spot-test me on real scenarios and get correct answers.</p>
+    </div>
+
+    <div class="domain-grid">
+      <div class="domain-item">
+        <div class="domain-term">TVM calculations</div>
+        <p class="domain-desc">Solve for unknown rate, payment, amount, or balloon &mdash; the primitive underneath every scenario.</p>
+      </div>
+      <div class="domain-item">
+        <div class="domain-term">Day-count conventions</div>
+        <p class="domain-desc">Actual/360 (bank default) vs Actual/365 vs 30/360 &mdash; the $26 bug that started a redesign.</p>
+      </div>
+      <div class="domain-item">
+        <div class="domain-term">Sub-debt structures</div>
+        <p class="domain-desc">EFG puts capital into a deal, solves for own return rate (target 15%+ yield).</p>
+      </div>
+      <div class="domain-item">
+        <div class="domain-term">Ride-along deals</div>
+        <p class="domain-desc">Zero capital deployed, collect payment spread over term.</p>
+      </div>
+      <div class="domain-item">
+        <div class="domain-term">Sell rate vs buy rate</div>
+        <p class="domain-desc">Customer rate (EFA) vs bank rate (promissory note). Delta is EFG's margin.</p>
+      </div>
+      <div class="domain-item">
+        <div class="domain-term">Advance payments</div>
+        <p class="domain-desc">First &amp; last collected at close as immediate revenue; changes bank payment count 60 &rarr; 58.</p>
+      </div>
+      <div class="domain-item">
+        <div class="domain-term">Interest-only periods</div>
+        <p class="domain-desc">Variable IO with margin-capture strategy (hold delta or apply to principal).</p>
+      </div>
+      <div class="domain-item">
+        <div class="domain-term">Escrow dual balances</div>
+        <p class="domain-desc">Bank-held unfunded escrow vs EFG-held funded escrow. Construction draws.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <p class="eyebrow">AI-native PM practices</p>
+      <h2>Where the pipeline breaks, and how I catch it.</h2>
+      <p>Every failure mode below was found and fixed on my watch &mdash; not because AI is broken, but because AI agents fail in specific, patternable ways that traditional QA does not catch. The value I add is knowing what to look for.</p>
+
+      <div class="failure">
+        <div class="failure-label">Failure mode 01 &middot; Silent deviation from spec</div>
+        <h4>The PDFs that never made it to S3.</h4>
+        <p>Ticket KAN-172 explicitly required generated PDFs to land in S3 at <code style="font-family:var(--mono);font-size:14px;background:var(--sub-surface);padding:1px 4px;">deals/&#123;dealId&#125;/generated/drafts/</code>. Replit built the feature, wrote passing tests, marked the ticket complete &mdash; but the PDFs were quietly stored on the container's local filesystem with an <code style="font-family:var(--mono);font-size:14px;background:var(--sub-surface);padding:1px 4px;">s3Bucket: "local"</code> tag. Would have caused total data loss on the next Replit workspace restart.</p>
+        <p><strong>How I caught it:</strong> spot-checked the S3 console for the generated files, found the bucket empty despite tests passing.</p>
+        <p><strong>How I fixed the pattern:</strong> added the "External System Rule" to the master guideline &mdash; when a ticket references S3, SES, or any external service, the code must actually call it, not substitute a local placeholder. Verification requires checking the external system's console, not just green tests.</p>
+      </div>
+
+      <div class="failure">
+        <div class="failure-label">Failure mode 02 &middot; Silent scope substitution</div>
+        <h4>Twelve templates, four of them wrong.</h4>
+        <p>Ticket set KAN-178, 179, 180 specified 17 email templates across customer, internal, and system categories. Replit shipped 12 templates &mdash; only 4 of which matched spec. Eight were invented from apparent context (staff invitations, ticklers, payment exceptions) without approval; 13 required templates were missing entirely.</p>
+        <p><strong>How I caught it:</strong> compared shipped template registry against ticket spec, template-by-template.</p>
+        <p><strong>How I fixed the pattern:</strong> added the "No Silent Scope Cuts" rule &mdash; if scope is too large, the agent must ask to split the ticket, not deliver a subset and mark it done.</p>
+      </div>
+
+      <div class="failure">
+        <div class="failure-label">Failure mode 03 &middot; Convenient but fragile design</div>
+        <h4>A webhook that would break on every Replit restart.</h4>
+        <p>Replit designed the ClamAV virus scanner to POST scan results to a webhook URL. This works in production &mdash; but Replit's development URLs change on every workspace restart, meaning dev testing would silently break the moment I resumed work the next morning.</p>
+        <p><strong>How I caught it:</strong> asked "what happens when my dev URL changes tomorrow?" during design review.</p>
+        <p><strong>How I fixed the pattern:</strong> pushed back with an alternative architecture &mdash; Lambda writes to an SQS queue, app polls the queue. URL-independent, retry-friendly, cost neutral.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="prose">
+      <p class="eyebrow">A concrete cycle</p>
+      <h2>One meeting, one afternoon, eight tickets.</h2>
+      <p>To make the pipeline concrete: here is one representative day, from the August 7 client meeting on the TValue calculator through the Jira tickets that captured its outcome.</p>
+    </div>
+
+    <div class="walkthrough">
+      <h3>August 7 meeting &rarr; 8 tickets, in 45 minutes.</h3>
+
+      <ol class="walkthrough-timeline">
+        <li>
+          <span class="time">T + 0 min</span>
+          <span class="what">70-minute client meeting ends. Fathom transcript delivered.</span>
+        </li>
+        <li>
+          <span class="time">T + 10 min</span>
+          <span class="what">Transcript through Claude &rarr; 5 confirmed feature requirements, 5 clarifications needed, all anchored to verbatim quotes.</span>
+        </li>
+        <li>
+          <span class="time">T + 20 min</span>
+          <span class="what">Visual widget breakdown produced for team &mdash; separates "confirmed / building" from "waiting on Paul / Blake".</span>
+        </li>
+        <li>
+          <span class="time">T + 30 min</span>
+          <span class="what">Missing scope identified from prior tickets. Atlassian MCP creates 8 Jira tickets in parallel: 3 for email infrastructure, 3 for template libraries, 2 for observability.</span>
+        </li>
+        <li>
+          <span class="time">T + 42 min</span>
+          <span class="what">Each ticket has: purpose, dependencies, acceptance criteria, test cases, "what Replit needs to start." Confluence design page auto-generated as system-of-record.</span>
+        </li>
+        <li>
+          <span class="time">T + 45 min</span>
+          <span class="what">Handoff to Replit for auto-development. My work on this batch is done until review time.</span>
+        </li>
+      </ol>
+    </div>
+
+    <blockquote>
+      Traditional PM approach: 3&ndash;5 days to produce equivalent artifacts, ticket accuracy usually degraded by memory decay of meeting details. AI-native approach: 45 minutes, ticket accuracy anchored to verbatim transcript quotes.
+      <cite>&mdash; the practical difference in one line</cite>
+    </blockquote>
+  </section>
+
+  <section>
+    <div class="prose">
+      <p class="eyebrow">Lessons</p>
+      <h2>What I learned that I couldn't have without doing this.</h2>
+
+      <ol class="lessons">
+        <li>
+          <h4>Silent AI deviation is the number-one production risk.</h4>
+          <p>Not incorrect code &mdash; agents self-correct on syntax. The risk is that they solve the wrong problem, in a way that passes tests, and don't tell you. Process controls matter more than tool selection.</p>
+        </li>
+        <li>
+          <h4>Ticket specificity is the highest-leverage PM activity.</h4>
+          <p>Vague tickets = agent goes off-script. Over-specified tickets = agent misses the point. The correct level of specification is domain-dependent: financial calculations need every edge case; UI polish needs none. Getting this right is the craft.</p>
+        </li>
+        <li>
+          <h4>The constraint shifts from build capacity to review capacity.</h4>
+          <p>AI can generate code faster than humans can review it. If you don't design the review step deliberately, you ship things you didn't authorize. This is why the "Human review &amp; correction loop" stage of my pipeline is the one I refuse to automate.</p>
+        </li>
+        <li>
+          <h4>Business stakeholders test differently than engineers.</h4>
+          <p>Paul spot-tested with live deals in meetings, not synthetic test cases. So the test cases I write for AI agents come from those live sessions &mdash; real numbers, real edge cases, real customer language. The domain expertise flows from stakeholder to PM to test suite, not the other way around.</p>
+        </li>
+        <li>
+          <h4>Guardrails, not oversight, is what makes this scale.</h4>
+          <p>Watching every commit is not sustainable. Writing rules that catch the specific ways your agents fail &mdash; the master guideline, the tier system, the deviation rule &mdash; is what turns AI-native development from a novelty into a repeatable process.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <footer>
+    <p class="kicker">The pipeline is not the point. What it lets a single PM ship is the point.</p>
+    <p class="contact">
+      <a href="mailto:marknguyen1911@gmail.com">marknguyen1911@gmail.com</a>
+      <span style="color:var(--faint)">&middot;</span>
+      Mark Duc Nguyen &middot; Sr. Product Manager
+    </p>
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var STORAGE_KEY = 'case-study-theme-efg';
+    var root = document.documentElement;
+    var buttons = document.querySelectorAll('[data-theme-set]');
+    var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function effectiveTheme(explicit) {
+      if (explicit === 'light' || explicit === 'dark') return explicit;
+      return 'light';
+    }
+
+    function updateActiveButton(explicit) {
+      var active = effectiveTheme(explicit);
+      buttons.forEach(function (btn) {
+        var isActive = btn.getAttribute('data-theme-set') === active;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      });
+    }
+
+    function applyTheme(explicit) {
+      var theme = (explicit === 'light' || explicit === 'dark') ? explicit : 'light';
+      root.setAttribute('data-theme', theme);
+      updateActiveButton(theme);
+    }
+
+    var stored = null;
+    try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+    applyTheme(stored || 'light');
+
+    buttons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var choice = btn.getAttribute('data-theme-set');
+        try { localStorage.setItem(STORAGE_KEY, choice); } catch (e) {}
+        applyTheme(choice);
+      });
+    });
+  })();
+</script>
+</body>
+</html>
